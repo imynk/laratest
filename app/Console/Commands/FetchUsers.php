@@ -27,7 +27,7 @@ class FetchUsers extends Command
     {
         try {
             // Make API request (replace with your API endpoint)
-            $response = Http::get('your-api-endpoint');
+            $response = Http::get('https://reqres.in/api/users');
             
             if ($response->successful()) {
                 $users = $response->json();

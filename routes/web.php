@@ -6,4 +6,4 @@ use App\Http\Controllers\UserapiController;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/users/search', [UserapiController::class, 'search']);
+Route::get('api/users/search', [UserapiController::class, 'search']);
