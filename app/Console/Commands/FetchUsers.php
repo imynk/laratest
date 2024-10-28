@@ -3,42 +3,38 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use App\Models\Userapi;
 
 class FetchUsers extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:fetch-users';
+    protected $signature = 'fetch:users';
+    protected $description = 'Fetch users from the API and update the database';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        try {
-            // Make API request (replace with your API endpoint)
-            $response = Http::get('https://reqres.in/api/users');
-            
-            if ($response->successful()) {
-                $users = $response->json();
-                // Process your users data here
-                
-                $this->info('Users fetched successfully!');
-            } else {
-                $this->error('Failed to fetch users from API');
+        // Step 1: Fetch data from the external API
+        $response = Http::get('https://reqres.in/api/users');
+
+        if ($response->successful()) {
+            // Step 2: Retrieve users data from the response
+            $users = $response->json()['data'];
+
+            // Step 3: Loop through each user and update the database
+            foreach ($users as $user) {
+                Userapi::updateOrCreate(
+                    ['email' => $user['email']], // Search condition for existing user
+                    [
+                        'first_name' => $user['first_name'],
+                        'last_name' => $user['last_name'],
+                        'avatar' => $user['avatar'],
+                    ]
+                );
             }
-        } catch (\Exception $e) {
-            $this->error('Error: ' . $e->getMessage());
+
+            $this->info('Users fetched and stored successfully.');
+        } else {
+            $this->error('Failed to fetch users from the API.');
         }
     }
 }

@@ -1,107 +1,78 @@
 <template>
-    <div class="max-w-md mx-auto mt-5">
-        <input 
-            v-model="searchQuery" 
-            @input="debounceSearch" 
-            placeholder="Search users..." 
-            class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        
-        <!-- Loading State -->
-        <div v-if="loading" class="mt-2 text-center text-gray-600">
-            Loading...
-        </div>
+  <div class="container mx-auto">
+    <div class="relative bg-gray-800 p-4 rounded-lg max-w-md mx-auto">
+      <input v-model="query" @input="fetchApiUsers" type="text" placeholder="Search users..."
+        class="w-full p-2 text-white bg-gray-700 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
-        <!-- Error State -->
-        <div v-if="error" class="mt-2 text-center text-red-600">
-            {{ error }}
-        </div>
+      <ul v-if="apiUsers.length"
+        class="absolute w-full bg-gray-800 text-white rounded-lg mt-1 max-h-40 overflow-y-auto shadow-lg">
+        <li v-for="user in apiUsers" :key="user.id" class="p-2 border-b border-gray-600 hover:bg-gray-700">
+          {{ user.first_name }}
+        </li>
+      </ul>
 
-        <!-- Results -->
-        <ul v-if="users.length > 0" class="mt-2 bg-white border border-gray-300 rounded-md shadow-md">
-            <li 
-                v-for="user in users" 
-                :key="user.id" 
-                @click="selectUser(user)"
-                class="p-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
-            >
-                <span>{{ user.first_name }} {{ user.last_name }}</span>
-                <span class="text-sm text-gray-500">{{ user.email }}</span>
-            </li>
-        </ul>
-
-        <!-- No Results -->
-        <div v-else-if="searchQuery && !loading" class="mt-2 text-center text-gray-600">
-            No users found
-        </div>
+      <p v-else class="absolute w-full mt-1 text-gray-400 bg-gray-800 rounded-lg p-2 shadow-lg" v-if="query">No users
+        found</p>
     </div>
+
+    <div class="bg-gray-800 mx-auto p-6 rounded-lg max-w-4xl mt-6">
+      <h1 class="text-white text-center text-3xl font-bold mb-6">All Users</h1>
+      <div v-for="user in allUsers" :key="user.id" class="flex items-center gap-6 p-4 bg-gray-700 rounded-lg mb-4">
+        <div class="text-white flex-1 font-medium">{{ user.first_name }} {{ user.last_name }}</div>
+        <div class="text-gray-300 flex-1">{{ user.email }}</div>
+        <div class="flex items-center justify-center flex-1">
+          <img :src="user.avatar" alt="avatar" class="w-16 h-16 rounded-full object-cover">
+        </div>
+      </div>
+    </div>
+
+  </div>
 </template>
 
 <script>
-import axios from 'axios';
-import { debounce } from 'lodash'; // Add this import
+import axios from "axios";
 
 export default {
-    name: 'UserSearch',
-    data() {
-        return {
-            searchQuery: '',
-            users: [],
-            loading: false,
-            error: null,
-        };
-    },
-    created() {
-        // Create debounced version of search function
-        this.debounceSearch = debounce(this.searchUsers, 300);
-    },
-    methods: {
-        async searchUsers() {
-            if (!this.searchQuery.trim()) {
-                this.users = [];
-                return;
-            }
-
-            try {
-                this.loading = true;
-                this.error = null;
-
-                const response = await axios.get('/api/users/search', {
-                    params: { query: this.searchQuery.trim() },
-                });
-                
-                this.users = response.data;
-            } catch (err) {
-                this.error = 'An error occurred while searching users';
-                console.error('Search error:', err);
-                this.users = [];
-            } finally {
-                this.loading = false;
-            }
-        },
-        selectUser(user) {
-            // Emit event when user is selected
-            this.$emit('user-selected', user);
-            // Optionally clear the search
-            // this.searchQuery = '';
-            // this.users = [];
+  data() {
+    return {
+      query: "",
+      apiUsers: [],
+      allUsers: [],
+    };
+  },
+  created() {
+    this.fetchAllUsers();
+  },
+  methods: {
+    async fetchApiUsers() {
+      if (this.query.length > 2) {
+        try {
+          const response = await axios.get('/users/search', {
+            params: { search: this.query },
+          });
+          this.apiUsers = response.data;
+        } catch (error) {
+          console.error("Error fetching users:", error);
         }
+      } else {
+        this.apiUsers = [];
+      }
     },
-    // Clean up debounce on component destroy
-    beforeUnmount() {
-        this.debounceSearch.cancel();
+    async fetchAllUsers() {
+      try {
+        const response = await axios.get('/user');
+        this.allUsers = response.data;
+      } catch (error) {
+        console.error("Error while fetching users:", error);
+      }
     }
+  },
 };
 </script>
 
+
+
+
 <style scoped>
-.user-search-input {
-    transition: all 0.3s ease;
-}
-
-.user-search-input:focus {
-    transform: translateY(-1px);
-}
-
-/* Add any additional custom styles here */
+/* Add any additional styling if needed */
 </style>
