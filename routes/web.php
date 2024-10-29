@@ -8,4 +8,5 @@ Route::get('/', function () {
 });
 Route::get('users/search', [UserapiController::class, 'search']);
 
-Route::get('user', [UserapiController::class, 'index']);
+Route::get('users', [UserapiController::class, 'index']);
+Route::post ('users/add', [UserapiController::class, 'adduser' ]);
